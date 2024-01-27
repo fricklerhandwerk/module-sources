@@ -1,6 +1,6 @@
 # Module-level source references
 
-This is an attempt to create a Nixpkgs module which allows declaring remote source references at the module level.
+This is an attempt to create a NixOS module which allows declaring remote source references at the module level.
 
 ## Problem
 
@@ -251,7 +251,7 @@ The result of this exploration is a need for further research into a lazy `impor
     disko = "${config.sources.disko}/module.nix";
     # the `sources` module could also be implicitly built-in for convenience
     sources = lib.modules.sources.module;
-    # modules shipped with NixOS can be a supplied via `specialArgs` in the NixOS-specific `evalModules` wrapper
+    # modules shipped with NixOS could be supplied explicitly via `specialArgs` in the NixOS-specific `evalModules` wrapper
     nginx = nixos.services.nginx;
   };
 
@@ -299,7 +299,25 @@ For instance, it would then be possible to write:
 
 But what would that even mean?
 
+# Proposal: Phased evaluation
+
+To overcome the above limitations, I propose running three phases:
+1. Collect source references and module declarations, and convert them to lock file entries and `imports`.
+2. Fetch sources using the lock file.
+3. Evaluate the entire configuration using previously obtained `imports` and sources.
+
+Check [`default.nix`](./default.nix) and [`sources.nix`](./sources.nix) for a working prototype implementation, and find detailed considerations in code comments.
+
+This approach fulfills all requirements in terms of ergonomics.
+
+Most importantly it enables:
+- Fully self-contained modules (assuming the relevant library code is available)
+- Managing dependencies globally and declaring source references locally
+- A light-weight, flexible implementation entirely in the Nix language
+- Transparent re-use of [Nixpkgs fetchers](https://nixos.org/manual/nixpkgs/unstable/#chap-pkgs-fetchers)
+
 ## Further reading
 
 - [RFC 22: Minimal module list](https://github.com/nixos/rfcs/pull/22)
 - [The Nix Hour #19: module system recursion, config vs config, common infinite recursion causes](https://www.youtube.com/watch?v=cZjOzOHb2ow)
+- [Modular Portable Service Layer proof of concept](https://github.com/NixOS/nixpkgs/pull/267111)
