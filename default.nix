@@ -27,7 +27,6 @@ let
         # ignore all other definitions
         { _module.check = false; }
       ];
-      specialArgs = { inherit lib; };
     };
   nixos = modules:
     import "${nixpkgs}/nixos/lib/eval-config.nix" ({
@@ -41,7 +40,8 @@ rec {
   # - two functions are never equal
   # - many attribute values have failing assertions
   new = (phased-evaluation ./new.nix).config.fileSystems;
+  next = (import ./next.nix).config.fileSystems;
   old = (import ./old.nix).config.fileSystems;
   # TODO: this needs proper tests.
-  test = new == old;
+  test = new == next && new == old;
 }
